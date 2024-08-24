@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { api } from '@/api';
+import { handleError, ref } from 'vue';
 import { useModal } from '@/composables/useModal';
 import { useToast } from '@/composables/useToast';
-import { ref } from 'vue';
-const modal = useModal<boolean>()
-const toast = useToast()
+const modal = useModal<boolean>();
+const toast = useToast();
 
 const formData = ref({
   applicantName: '',
@@ -25,11 +25,45 @@ const formData = ref({
   savingsContribution: 0,
 });
 
+const prop = defineProps({
+  getApplications: Function,
+});
+
 const submitApplication = async () => {
-  const response = await api.applications.post(formData.value)
-  if (response.success) toast.success('Application Saved Successfully.')
-  else {
-    toast.error('Error occurred while saving application')
+  let error = false;
+  if (!formData.value.applicantName) {
+    toast.error('Applicant name is required');
+    error = true;
+  }
+  if (!formData.value.applicantEmail) {
+    toast.error('Applicant email is required');
+    error = true;
+  }
+  if (!formData.value.applicantMobilePhoneNumber) {
+    toast.error('Applicant mobile phone number is required');
+    error = true;
+  }
+  if (!formData.value.applicantAddress) {
+    toast.error('Applicant address is required');
+    error = true;
+  }
+  if (!formData.value.annualIncomeBeforeTax) {
+    toast.error('Annual income before tax is required');
+    error = true;
+  }
+  if (!formData.value.loanAmount) {
+    toast.error('Loan amount is required');
+    error = true;
+  }
+  if (!formData.value.loanDuration) {
+    toast.error('Loan duration is required');
+    error = true;
+  }
+  if (error) {
+    return;
+  }
+  const response = await api.applications.post(formData.value);
+  if (response.success) {
     formData.value.applicantName = '';
     formData.value.applicantEmail = '';
     formData.value.applicantMobilePhoneNumber = '';
@@ -46,9 +80,13 @@ const submitApplication = async () => {
     formData.value.outgoingMortgage = 0;
     formData.value.outgoingValuation = 0;
     formData.value.savingsContribution = 0;
+    toast.success('Application Saved Successfully.');
+    modal.confirm(false);
+    prop.getApplications();
+  } else {
+    toast.error('Error occurred while saving application');
   }
-  modal.confirm(false)
-}
+};
 </script>
 
 <template>
@@ -65,7 +103,7 @@ const submitApplication = async () => {
     <BModal :visible="modal.isVisible.value" :confirm="modal.confirm">
       <template #header>Submit loan application</template>
 
-      <form @submit.prevent="submitApplication()">
+      <form ref="form" @submit.prevent="submitApplication()">
         <!-- Need to change with v-for after change state with object -->
         <label for="applicant_name">Name</label>
         <BTextInput v-model="formData.applicantName" id="applicant_name" type="text" required />
@@ -104,10 +142,12 @@ const submitApplication = async () => {
         <BNumberInput v-model="formData.outgoingValuation" id="outgoing_valuation" required />
         <label for="savings_contribution">Savings Contribution</label>
         <BNumberInput v-model="formData.savingsContribution" id="savings_contribution" required />
+
+
       </form>
 
       <template #footer>
-        <BButton type="submit" variant="primary" label="Submit"></BButton>
+        <BButton type="submit" variant="primary" label="Submit" @click="submitApplication()"></BButton>
         <BButton label="Cancel" @click="modal.confirm(false)"></BButton>
       </template>
     </BModal>

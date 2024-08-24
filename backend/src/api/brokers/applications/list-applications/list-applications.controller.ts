@@ -122,8 +122,7 @@ export class BrokerApplicationsListController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Create applications',
-    description:
-      'Create the applications that the broker has submitted.',
+    description: 'Create the applications that the broker has submitted.',
   })
   @ApiOkResponse({
     type: BrokerApplicationPostResponseDto,
@@ -138,14 +137,60 @@ export class BrokerApplicationsListController {
   })
   async post(
     @User() user: BrokerDto,
-    @Body() body: ApplicationDto
+
+    @Body() body: any,
   ): Promise<BrokerApplicationPostResponseDto> {
-    const avgLoanAmount = await this.applicationEntity.getAverageLoanAmount()
-    const loanAmount = body.loanAmount !== avgLoanAmount ? body.loanAmount : null;
-    // const application = await this.applicationEntity.create({ ...body, status: ApplicationStatus.Submitted, brokerId: user.id });
-    return {
-      success: true,
-      loanAmount
-    };
+    const avgLoanAmount = await this.applicationEntity.getAverageLoanAmount();
+
+    const {
+      applicantName,
+      applicantEmail,
+      applicantMobilePhoneNumber,
+      applicantAddress,
+      annualIncomeBeforeTax,
+      incomingAddress,
+      incomingDeposit,
+      incomingPrice,
+      incomingStampDuty,
+      loanAmount,
+      loanDuration,
+      monthlyExpenses,
+      outgoingAddress,
+      outgoingMortgage,
+      outgoingValuation,
+      savingsContribution,
+    } = body;
+
+    const loanAmountRes = loanAmount !== avgLoanAmount ? loanAmount : null;
+
+    try {
+      await this.applicationEntity.create({
+        applicantName,
+        applicantEmail,
+        applicantMobilePhoneNumber,
+        applicantAddress,
+        annualIncomeBeforeTax,
+        incomingAddress,
+        incomingDeposit,
+        incomingPrice,
+        incomingStampDuty,
+        loanAmount,
+        loanDuration,
+        monthlyExpenses,
+        outgoingAddress,
+        outgoingMortgage,
+        outgoingValuation,
+        savingsContribution,
+        status: ApplicationStatus.Submitted,
+        brokerId: user.id,
+      });
+
+      return {
+        success: true,
+        loanAmount: loanAmountRes,
+      };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 }
