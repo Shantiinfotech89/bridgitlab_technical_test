@@ -142,6 +142,7 @@ export class BrokerApplicationsListController {
   ): Promise<BrokerApplicationPostResponseDto> {
     const avgLoanAmount = await this.applicationEntity.getAverageLoanAmount();
 
+    // get the body from the request
     const {
       applicantName,
       applicantEmail,
@@ -164,6 +165,7 @@ export class BrokerApplicationsListController {
     const loanAmountRes = loanAmount !== avgLoanAmount ? loanAmount : null;
 
     try {
+      // Create the application
       await this.applicationEntity.create({
         applicantName,
         applicantEmail,
@@ -185,6 +187,7 @@ export class BrokerApplicationsListController {
         brokerId: user.id,
       });
 
+      // return the loan amount
       return {
         success: true,
         loanAmount: loanAmountRes,
